@@ -6,21 +6,21 @@ Căng tin trường Đại học Công nghiệp đóng vai trò quan trọng tro
  Các chức năng
 1. Quản lý hàng hóa:
 -Thêm, sửa ,xóa sản phẩm
-,Tìm kiếm sản phẩm
+-Tìm kiếm sản phẩm
 2. Quản lý bán hàng:
 -Ghi nhận đơn hàng
-,Tính toán tổng doanh thu
-,Quản lý chi tiết giao dịch
+-Tính toán tổng doanh thu
+-Quản lý chi tiết giao dịch
 3. Quản lý nhà cung cấp:
 -Thêm, sửa xóa thông tin nha cung cấp
 4. Phản hồi từ sinh viên:
 -Ghi nhận phản hồi
-,Phân tích phản hồi
+-Phân tích phản hồi
 5. Báo cáo và thống kê:
 -Tạo báo cáo doanh thu
-,Thống kê số lượng sản phẩm tồn kho
+-Thống kê số lượng sản phẩm tồn kho
 
-Tạo cơ sở dữ liệu gồm các bảng
+*Tạo cơ sở dữ liệu gồm các bảng
 
 *Sanpham(masapham(key),tensanpham,loaisanpham,soluong,gia, manhacungcap)
 *Nhacungcap(manhacungcap(key),tennhacungcap,thongtinlienhe)
