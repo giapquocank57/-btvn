@@ -1,1 +1,325 @@
-hehe
+Mô tả:
+Căng tin trường Đại học Công nghiệp đóng vai trò quan trọng trong việc nâng cao chất lượng cuộc sống và học tập của sinh viên. Đây không chỉ là nơi cung cấp bữa ăn hàng ngày mà còn là không gian thư giãn và giao lưu. Việc quản lý căng tin hiệu quả, đảm bảo vệ sinh an toàn thực phẩm và nâng cao chất lượng dịch vụ là nhiệm vụ cấp thiết. Tài liệu này sẽ trình bày những khía cạnh quan trọng trong quản lý căng tin nhằm cải thiện trải nghiệm của sinh viên và góp phần xây dựng môi trường học tập tốt hơn.
+
+ Các chức năng
+1. Quản lý hàng hóa:
+-Thêm, sửa ,xóa sản phẩm
+,Tìm kiếm sản phẩm
+2. Quản lý bán hàng:
+-Ghi nhận đơn hàng
+,Tính toán tổng doanh thu
+,Quản lý chi tiết giao dịch
+3. Quản lý nhà cung cấp:
+-Thêm, sửa xóa thông tin nha cung cấp
+4. Phản hồi từ sinh viên:
+-Ghi nhận phản hồi
+,Phân tích phản hồi
+5. Báo cáo và thống kê:
+-Tạo báo cáo doanh thu
+,Thống kê số lượng sản phẩm tồn kho
+
+Tạo cơ sở dữ liệu gồm các bảng
+
+*Sanpham(masapham(key),tensanpham,loaisanpham,soluong,gia, manhacungcap)
+*Nhacungcap(manhacungcap(key),tennhacungcap,thongtinlienhe)
+*Giaodich(magiaodich(key),ngaygiaodich,masanpham,soluongban,tongtien)
+*Phanhoi(maphanhoi(key),magiaodich,noidung,danhgia,ngayphanhoi
+
+Như vậy, dựa theo những thông tin mà ta đã thu thập được chúng ta sẽ xây dựng các bảng đáp ứng yêu cầu quản lý căng tin trường đại học công nghiệp.
+
+*Tạo các bảng mô tả sql:
+
+1.bảng sản phẩm
+![Screenshot 2024-06-19 003631.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-19%20003631.png)
+
+2.Bảng nhà cung cấp
+![Screenshot 2024-06-19 003620.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-19%20003620.png)
+3.Bảng giao dịch![Screenshot 2024-06-19 003610.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-19%20003610.png)
+4.Bảng phản hồi![Screenshot 2024-06-19 003637.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-19%20003637.png)
+
+Nhập dữ liệu các bảng:
+
+1.Bảng sản phẩm
+![Screenshot 2024-06-18 185841.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20185841.png)
+2.Bảng nhà cung cấp
+![Screenshot 2024-06-18 185902.png](https://tiloid.com/uploads/images/june2024/screenshot-2024-06-18-1859021.png)
+
+3.Bảng giao dịch
+![Screenshot 2024-06-18 185910.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20185910.png)
+
+
+4.Bảng phản hồi
+![Screenshot 2024-06-18 185851.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20185851.png)
+
+
+*Sơ đồ liên kết:
+![Screenshot 2024-06-18 185311.png](https://tiloid.com/uploads/images/june2024/screenshot-2024-06-18-1853111.png)
+
+Tạo trigger
+![Screenshot 2024-06-18 230726.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20230726.png)
+CREATE TRIGGER update_soluong_sanpham  -- Tạo trigger tên update_soluong_sanpham
+ON Giaodichbanhang                     -- Áp dụng trên bảng Giaodichbanhang
+AFTER INSERT                           -- Kích hoạt sau khi một hàng mới được chèn vào
+AS
+BEGIN
+    SET NOCOUNT ON;                    -- Ngăn việc trả về số hàng bị ảnh hưởng bởi các lệnh SQL
+
+    DECLARE @masapham INT;             -- Khai báo biến @masapham để lưu mã sản phẩm tạm thời
+    DECLARE @soluongban INT;           -- Khai báo biến @soluongban để lưu số lượng bán tạm thời
+
+    -- Cursor để duyệt qua từng hàng trong bảng inserted
+    DECLARE cur CURSOR FOR
+    SELECT masanpham, soluongban       -- Chọn mã sản phẩm và số lượng bán từ bảng inserted
+    FROM inserted;
+
+    OPEN cur;                          -- Mở cursor để bắt đầu duyệt các hàng trong bảng inserted
+
+    FETCH NEXT FROM cur INTO @masapham, @soluongban;  -- Lấy hàng đầu tiên từ cursor và gán giá trị cho các biến
+
+    WHILE @@FETCH_STATUS = 0           -- Kiểm tra nếu còn hàng để duyệt
+    BEGIN
+        -- Cập nhật số lượng sản phẩm trong bảng Sanpham
+        UPDATE Sanpham
+        SET soluong = soluong - @soluongban  -- Trừ số lượng bán từ số lượng hiện có
+        WHERE masapham = @masapham;           -- Với điều kiện mã sản phẩm khớp
+
+        FETCH NEXT FROM cur INTO @masapham, @soluongban;  -- Lấy hàng tiếp theo từ cursor
+    END;
+
+    CLOSE cur;                        -- Đóng cursor sau khi duyệt xong
+    DEALLOCATE cur;                   -- Giải phóng tài nguyên cho cursor
+END;
+
+
+Chèn dữ liệu
+![Screenshot 2024-06-18 232051.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20232051.png)
+INSERT INTO Giaodichbanhang (magiaodich, ngaygiaodich, masanpham, soluongban, tongtien)
+VALUES 
+(6, '2023-06-06', 1, 10, 8000),
+(7, '2023-06-07', 2, 5, 6000); -- Chèn thêm giá trị mới
+
+
+Thêm thủ tục và các chưc năng theo mong muốn
+
+-thêm, sửa , xóa sản phẩm
+
+-tra cứu doanh thu của tháng,năm
+
+-tìm kiếm sản phẩm 
+
+-sản phẩm bán được nhiều nhất
+
++Thêm sản phẩm:
+![Screenshot 2024-06-18 192618.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20192618.png)
+
+
+
+Tạo thủ tục thêm
+ 
+CREATE PROCEDURE themsanphammoi -- Tạo stored procedure tên themsanphammoi
+    @masapham INT, -- Tham số masapham
+    @tensanpham NVARCHAR(100), -- Tham số tensanpham
+    @loaisanpham NVARCHAR(50), -- Tham số loaisanpham
+    @soluong INT, -- Tham số soluong
+    @gia DECIMAL(10, 2), -- Tham số gia
+    @manhacungcap INT -- Tham số manhacungcap
+AS
+BEGIN
+    -- Kiểm tra tính hợp lệ của nhà cung cấp
+    IF NOT EXISTS (SELECT 1 FROM nhacungcap WHERE manhacungcap = @manhacungcap)
+    BEGIN
+        RAISERROR('Nha cung cap khong ton tai.', 16, 1); -- Thông báo lỗi nếu nhà cung cấp không tồn tại
+        RETURN; -- Kết thúc thủ tục
+    END
+
+    -- Thêm sản phẩm mới vào bảng Sanpham
+    INSERT INTO sanpham (masapham, tensanpham, loaisanpham, soluong, gia, manhacungcap)
+    VALUES (@masapham, @tensanpham, @loaisanpham, @soluong, @gia, @manhacungcap);
+END;
+
+    -- Thêm sản phẩm mới vào bảng Sanpham
+    INSERT INTO Sanpham (masapham, tensanpham, loaisanpham, soluongtrongkho, gia, manhacungcap)
+    VALUES (@masapham, @tensanpham, @loaisanpham, @soluongtrongkho, @gia, @manhacungcap);
+
+    -- Trả về mã sản phẩm mới được thêm
+    PRINT 'San pham moi da duoc them voi ma san pham: ' + CAST(@masapham AS NVARCHAR(10));
+END;
+
+Gọi thủ tục thêm:
+
+![Screenshot 2024-06-18 192524.png](https://tiloid.com/uploads/images/june2024/screenshot-2024-06-18-1925241.png)
+
+EXEC themsanphammoi
+    @masapham = 1, -- Cung cấp giá trị masapham
+    @tensanpham = N'banh mi', -- Cung cấp giá trị tensanpham
+    @loaisanpham = N'thuc pham', -- Cung cấp giá trị loaisanpham
+    @soluong = 150, -- Cung cấp giá trị soluong
+    @gia = 20000, -- Cung cấp giá trị gia
+    @manhacungcap = 1; -- Cung cấp giá trị manhacungcap
+
+
+kqua:
+![Screenshot 2024-06-18 193225.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20193225.png)
+
+Cập nhật sản phẩm:
+![Screenshot 2024-06-18 210732.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20210732.png)
+
+CREATE PROCEDURE sua_san_pham
+    @masapham INT, -- Tham số mã sản phẩm cần cập nhật
+    @tensanpham NVARCHAR(100), -- Tham số tên sản phẩm mới
+    @loaisanpham NVARCHAR(50), -- Tham số loại sản phẩm mới
+    @soluongtrongkho INT, -- Tham số số lượng trong kho mới
+    @gia DECIMAL(10, 2), -- Tham số giá mới
+    @manhacungcap INT -- Tham số mã nhà cung cấp mới
+AS
+BEGIN
+    -- Kiểm tra xem sản phẩm có tồn tại hay không
+    IF NOT EXISTS (SELECT 1 FROM Sanpham WHERE masapham = @masapham)
+    BEGIN
+        PRINT 'Khong ton tai san pham voi ma san pham ' + CAST(@masapham AS NVARCHAR(10));
+        RETURN;
+    END
+
+    -- Kiểm tra tính hợp lệ của nhà cung cấp
+    IF NOT EXISTS (SELECT 1 FROM nhacungcap WHERE manhacungcap = @manhacungcap)
+    BEGIN
+        RAISERROR('Nha cung cap khong ton tai.', 16, 1);
+        RETURN;
+    END
+
+    -- Cập nhật thông tin sản phẩm
+    UPDATE Sanpham
+    SET
+        tensanpham = @tensanpham, -- Cập nhật tên sản phẩm mới
+        loaisanpham = @loaisanpham, -- Cập nhật loại sản phẩm mới
+        soluong = @soluongtrongkho, -- Cập nhật số lượng trong kho mới
+        gia = @gia, -- Cập nhật giá mới
+        manhacungcap = @manhacungcap -- Cập nhật mã nhà cung cấp mới
+    WHERE
+        masapham = @masapham; -- Điều kiện cập nhật: mã sản phẩm
+
+    PRINT 'Da cap nhat san pham voi ma san pham: ' + CAST(@masapham AS NVARCHAR(10));
+END;
+
+
+gọi thủ tục:
+
+![Screenshot 2024-06-18 210754.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20210754.png)
+
+kqua:
+![Screenshot 2024-06-18 210602.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20210602.png)
+
+-xóa sản phẩm :
+CREATE PROCEDURE xoa_san_pham
+    @masapham INT -- Tham số mã sản phẩm cần xóa
+AS
+BEGIN
+    -- Kiểm tra xem sản phẩm có tồn tại hay không
+    IF NOT EXISTS (SELECT 1 FROM Sanpham WHERE masapham = @masapham)
+    BEGIN
+        PRINT 'Khong ton tai san pham voi ma san pham ' + CAST(@masapham AS NVARCHAR(10)); -- In thông báo nếu sản phẩm không tồn tại
+        RETURN; -- Kết thúc thủ tục nếu sản phẩm không tồn tại
+    END
+
+    -- Xóa sản phẩm từ bảng Sanpham
+    DELETE FROM Sanpham WHERE masapham = @masapham; -- Xóa sản phẩm có mã sản phẩm tương ứng
+
+    PRINT 'Da xoa san pham voi ma san pham: ' + CAST(@masapham AS NVARCHAR(10)); -- In thông báo đã xóa thành công sản phẩm
+END;
+GO
+
+![Screenshot 2024-06-18 210944.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20210944.png)
+
+gọi thủ tục xóa:
+![Screenshot 2024-06-18 211041.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20211041.png)
+
+kqua:
+![Screenshot 2024-06-18 211213.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20211213.png)
+
+Tìm kiếm sản phẩm bằng mã:
+![Screenshot 2024-06-19 033435.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-19%20033435.png)
+USE quanlicangtin; -- Thay thế bằng tên cơ sở dữ liệu thực tế của bạn
+
+GO -- Sử dụng GO để phân tách các batch
+
+CREATE OR ALTER PROCEDURE TimKiemSanPhamBangMa
+    @ma_san_pham INT -- Tham số mã sản phẩm cần tìm kiếm
+AS
+BEGIN
+    SET NOCOUNT ON; -- Ngăn chặn việc trả về số lượng hàng bị ảnh hưởng, giúp tối ưu hóa hiệu suất
+
+    SELECT *
+    FROM Sanpham
+    WHERE masapham = @ma_san_pham; -- Tìm kiếm sản phẩm có mã sản phẩm tương ứng
+END;
+
+Thủ tục để tìm kiếm :
+
+EXEC TimKiemSanPhamBangMa @ma_san_pham = 3;
+
+kết quả:![Screenshot 2024-06-19 033408.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-19%20033408.png)
+
+Sản phẩm bán chạy nhất:
+![Screenshot 2024-06-19 034734.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-19%20034734.png)
+
+-- Chọn dòng dữ liệu đầu tiên từ kết quả truy vấn, tức là sản phẩm bán chạy nhất
+SELECT TOP 1
+    sp.masapham,             -- Chọn mã sản phẩm
+    sp.tensanpham,           -- Chọn tên sản phẩm
+    sp.loaisanpham,          -- Chọn loại sản phẩm
+    sp.soluongtrongkho,      -- Chọn số lượng sản phẩm còn trong kho
+    sp.gia,                  -- Chọn giá sản phẩm
+    sp.manhacungcap,         -- Chọn mã nhà cung cấp
+    SUM(gd.soluongban) AS tong_soluong_ban  -- Tính tổng số lượng bán của sản phẩm
+FROM
+    Sanpham sp               -- Từ bảng Sanpham
+INNER JOIN
+    Giaodichbanhang gd ON sp.masapham = gd.masanpham  -- Liên kết với bảng Giaodichbanhang để lấy số lượng bán
+GROUP BY
+    sp.masapham,             -- Nhóm theo mã sản phẩm
+    sp.tensanpham,           -- Nhóm theo tên sản phẩm
+    sp.loaisanpham,          -- Nhóm theo loại sản phẩm
+    sp.soluongtrongkho,      -- Nhóm theo số lượng còn trong kho
+    sp.gia,                  -- Nhóm theo giá sản phẩm
+    sp.manhacungcap          -- Nhóm theo mã nhà cung cấp
+ORDER BY
+    tong_soluong_ban DESC;   -- Sắp xếp theo tổng số lượng bán giảm dần
+
+kqua:
+![Screenshot 2024-06-19 034817.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-19%20034817.png)
+
+Tra cứu doanh thu theo tháng, năm:
+-Theo tháng:
+![Screenshot 2024-06-18 233314.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20233314.png)
+
+SELECT 
+    YEAR(ngaygiaodich) AS nam,            -- Lấy năm từ trường ngày giao dịch và đặt tên là 'nam'
+    MONTH(ngaygiaodich) AS thang,         -- Lấy tháng từ trường ngày giao dịch và đặt tên là 'thang'
+    SUM(tongtien) AS doanhthu             -- Tính tổng các giá trị trong trường 'tongtien' và đặt tên là 'doanhthu'
+FROM 
+    Giaodichbanhang                        -- Từ bảng Giaodichbanhang
+GROUP BY 
+    YEAR(ngaygiaodich),                    -- Nhóm theo năm của ngày giao dịch
+    MONTH(ngaygiaodich)                    -- Nhóm theo tháng của ngày giao dịch
+ORDER BY 
+    nam, thang;                            -- Sắp xếp kết quả tăng dần theo năm và tháng
+
+kqua:
+![Screenshot 2024-06-18 225001.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20225001.png)
+
+-tổng doanh thu cả năm:
+![Screenshot 2024-06-18 233902.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20233902.png)
+
+SELECT 
+    YEAR(ngaygiaodich) AS nam,       -- Chọn năm từ trường ngày giao dịch và đặt tên là 'nam'
+    SUM(tongtien) AS doanhthu        -- Tính tổng các giá trị trong trường 'tongtien' và đặt tên là 'doanhthu'
+FROM 
+    giaodichbanhang                  -- Từ bảng giaodichbanhang
+GROUP BY 
+    YEAR(ngaygiaodich)               -- Nhóm kết quả theo năm của ngày giao dịch
+ORDER BY 
+    nam;                             -- Sắp xếp kết quả theo năm tăng dần
+
+kqua:
+![Screenshot 2024-06-18 233955.png](https://tiloid.com/uploads/images/june2024/Screenshot%202024-06-18%20233955.png)
+                
